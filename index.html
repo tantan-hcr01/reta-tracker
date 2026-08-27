@@ -5,389 +5,272 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Retatrutide">
-  <title>Retatrutide Tracker</title>
+  <title>Retatrutide Log</title>
+  <!-- Chart.js für flüssige iOS-Diagramme -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
   <style>
     :root {
-      --bg: #090d16;
-      --card: #161f32;
-      --card-sub: #212d45;
-      --accent: #38bdf8;
-      --text: #f8fafc;
-      --sub: #94a3b8;
-      --radius: 18px;
+      --bg: #000000;
+      --card: #1c1c1e;
+      --card-sub: #2c2c2e;
+      --accent: #0a84ff;
+      --accent-gradient: linear-gradient(180deg, rgba(10,132,255,0.25) 0%, rgba(10,132,255,0) 100%);
+      --text: #ffffff;
+      --sub: #8e8e93;
+      --green: #30d158;
+      --radius: 16px;
     }
 
-    * {
-      -webkit-tap-highlight-color: transparent;
-      box-sizing: border-box;
-    }
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
     body {
       margin: 0;
-      padding: calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 20px) 16px;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 24px) 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
       background: var(--bg);
       color: var(--text);
+      -webkit-font-smoothing: antialiased;
     }
 
-    h2 { font-size: 24px; font-weight: 700; margin: 8px 0 16px 0; }
-    h3 { font-size: 16px; font-weight: 600; margin: 0 0 12px 0; color: #e2e8f0; }
+    .header-sub { font-size: 13px; color: var(--sub); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+    h1 { font-size: 28px; font-weight: 700; margin: 2px 0 16px 0; letter-spacing: -0.5px; }
 
     .card {
       background: var(--card);
-      padding: 16px;
       border-radius: var(--radius);
+      padding: 16px;
       margin-bottom: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-
-    .stat-box {
-      background: var(--card-sub);
-      padding: 12px;
-      border-radius: 14px;
-      text-align: center;
-    }
-
-    .stat-val { font-size: 18px; font-weight: 700; color: var(--accent); }
-    .stat-lbl { font-size: 11px; color: var(--sub); margin-top: 2px; }
-
-    input, button, select {
-      width: 100%;
-      height: 48px;
-      padding: 0 14px;
-      margin-top: 8px;
-      border-radius: 12px;
-      border: none;
-      font-size: 16px;
-      font-family: inherit;
-      appearance: none;
-      -webkit-appearance: none;
-    }
-
-    input, select {
-      background: var(--card-sub);
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    button {
-      background: var(--accent);
-      color: #0f172a;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .btn-sub {
-      background: var(--card-sub);
-      color: #fff;
       border: 1px solid rgba(255,255,255,0.08);
     }
 
-    .log-item {
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    }
+    /* Stat Cards */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .stat-card { background: var(--card); border-radius: 12px; padding: 12px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
+    .stat-val { font-size: 18px; font-weight: 700; margin-top: 2px; }
+    .stat-lbl { font-size: 10px; color: var(--sub); font-weight: 600; text-transform: uppercase; }
 
-    .log-header {
-      display: flex;
-      justify-content: space-between;
-      font-weight: 600;
-      font-size: 15px;
-    }
+    /* Graph Canvas */
+    .chart-container { position: relative; height: 180px; width: 100%; margin-top: 8px; }
 
-    .log-details {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-top: 6px;
+    /* Forms & Inputs */
+    .input-group { margin-bottom: 10px; }
+    label { font-size: 12px; color: var(--sub); display: block; margin-bottom: 4px; font-weight: 500; }
+    input, select {
+      width: 100%; height: 44px; padding: 0 12px; background: var(--card-sub);
+      border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; color: #fff;
+      font-size: 16px; font-family: inherit; outline: none;
     }
+    input:focus { border-color: var(--accent); }
 
-    .tag {
-      background: var(--card-sub);
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 11px;
+    button {
+      width: 100%; height: 46px; background: var(--accent); border: none;
+      border-radius: 10px; color: #fff; font-size: 16px; font-weight: 600;
+      margin-top: 6px; cursor: pointer; transition: transform 0.1s ease;
     }
+    button:active { transform: scale(0.98); opacity: 0.9; }
 
-    .tag-dose { background: #0284c7; color: #fff; }
-    .tag-side { background: #881337; color: #fecdd3; }
-
-    .rotation-alert {
-      background: rgba(56, 189, 248, 0.1);
-      border-left: 4px solid var(--accent);
-      padding: 10px 14px;
-      font-size: 13px;
-      border-radius: 10px;
-      margin-bottom: 14px;
+    /* Segmented Control Switch */
+    .segmented {
+      display: flex; background: var(--card-sub); border-radius: 8px; padding: 2px; margin-bottom: 12px;
     }
-
-    /* Inline Simple Chart */
-    .chart-container {
-      width: 100%;
-      height: 150px;
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
-      padding-top: 20px;
+    .segmented button {
+      flex: 1; height: 28px; background: transparent; color: var(--sub); font-size: 12px;
+      margin: 0; border-radius: 6px; font-weight: 500;
     }
+    .segmented button.active { background: #636366; color: #fff; }
 
-    .chart-bar-wrap {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      height: 100%;
-      justify-content: flex-end;
-    }
-
-    .chart-bar {
-      width: 100%;
-      background: var(--accent);
-      border-radius: 4px 4px 0 0;
-      min-height: 4px;
-    }
-
-    .chart-label {
-      font-size: 9px;
-      color: var(--sub);
-      margin-top: 4px;
-      white-space: nowrap;
-    }
+    /* Log List */
+    .log-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .log-row:last-child { border-bottom: none; }
+    .badge { background: rgba(10,132,255,0.15); color: var(--accent); padding: 3px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; }
   </style>
 </head>
 <body>
 
-  <h2>Retatrutide Tracker</h2>
+  <div class="header-sub">GLP-1 Protocol</div>
+  <h1>Retatrutide Log</h1>
 
-  <!-- Dashboard Stats -->
-  <div class="grid">
-    <div class="stat-box"><div class="stat-val" id="startWt">--</div><div class="stat-lbl">Startgewicht</div></div>
-    <div class="stat-box"><div class="stat-val" id="currWt">--</div><div class="stat-lbl">Aktuell</div></div>
-    <div class="stat-box"><div class="stat-val" id="diffWt">--</div><div class="stat-lbl">Gesamtabnahme</div></div>
-    <div class="stat-box"><div class="stat-val" id="activeLevel">--</div><div class="stat-lbl">Est. Wirkstoff (mg)</div></div>
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-lbl">Start</div><div class="stat-val" id="startWt">123.4</div></div>
+    <div class="stat-card"><div class="stat-lbl">Aktuell</div><div class="stat-val" style="color:var(--accent)" id="currWt">--</div></div>
+    <div class="stat-card"><div class="stat-lbl">Verlust</div><div class="stat-val" style="color:var(--green)" id="diffWt">--</div></div>
   </div>
 
-  <div id="rotationInfo" class="rotation-alert">Nächste Injektion: Stelle wählen...</div>
-
-  <!-- Entry Form -->
+  <!-- Graph Card -->
   <div class="card">
-    <h3>Neuer Eintrag</h3>
-    <input type="datetime-local" id="datetime">
-    <input type="number" step="0.1" id="weight" placeholder="Gewicht (kg)" inputmode="decimal">
-    <input type="number" step="0.25" id="dose" placeholder="Retatrutide Dosis (mg)" inputmode="decimal">
-    <select id="site">
-      <option value="">-- Injektionsstelle wählen --</option>
-      <option value="Bauch links">Bauch links</option>
-      <option value="Bauch rechts">Bauch rechts</option>
-      <option value="Oberschenkel links">Oberschenkel links</option>
-      <option value="Oberschenkel rechts">Oberschenkel rechts</option>
-      <option value="Oberarm links">Oberarm links</option>
-      <option value="Oberarm rechts">Oberarm rechts</option>
-    </select>
-    <input type="text" id="sideEffects" placeholder="Nebenwirkungen (z. B. Übelkeit)">
+    <div class="segmented">
+      <button class="active" onclick="switchChart('weight')">Gewichtsverlauf</button>
+      <button onclick="switchChart('serum')">Wirkstoff im Blut</button>
+    </div>
+    <div class="chart-container">
+      <canvas id="weightChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Entry Mask -->
+  <div class="card">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+      <div class="input-group">
+        <label>Datum</label>
+        <input type="date" id="date">
+      </div>
+      <div class="input-group">
+        <label>Gewicht (kg)</label>
+        <input type="number" step="0.1" id="weight" placeholder="z. B. 117.5" inputmode="decimal">
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+      <div class="input-group">
+        <label>Dosis (mg)</label>
+        <input type="number" step="0.25" id="dose" placeholder="z. B. 2.0" inputmode="decimal">
+      </div>
+      <div class="input-group">
+        <label>Stelle</label>
+        <select id="site">
+          <option value="">-- Keine --</option>
+          <option value="Bauch L">Bauch L</option>
+          <option value="Bauch R">Bauch R</option>
+          <option value="Bein L">Bein L</option>
+          <option value="Bein R">Bein R</option>
+        </select>
+      </div>
+    </div>
     <button onclick="addEntry()">Eintrag Speichern</button>
   </div>
 
-  <!-- Graph -->
+  <!-- History -->
   <div class="card">
-    <h3>Gewichtsverlauf (Letzte Einträge)</h3>
-    <div class="chart-container" id="chart"></div>
-  </div>
-
-  <!-- Backup -->
-  <div class="card">
-    <h3>Sicherung</h3>
-    <div class="grid" style="margin-bottom:0;">
-      <button class="btn-sub" onclick="exportCSV()">CSV Export</button>
-      <button class="btn-sub" onclick="document.getElementById('importFile').click()">CSV Import</button>
-    </div>
-    <input type="file" id="importFile" style="display:none" onchange="importCSV(event)" accept=".csv">
-  </div>
-
-  <!-- Log History -->
-  <div class="card">
-    <h3>Historie</h3>
+    <div style="font-size:14px; font-weight:600; margin-bottom:8px; color:var(--sub);">VERLAUF</div>
     <div id="history"></div>
   </div>
 
   <script>
-    var HALF_LIFE_HOURS = 144;
-    
-    var now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    document.getElementById('datetime').value = now.toISOString().slice(0,16);
+    const HALF_LIFE_DAYS = 6;
+    document.getElementById('date').valueAsDate = new Date();
 
-    var defaultInitialLog = [{
-      datetime: "2026-08-02T08:00",
-      weight: 123.4,
-      dose: 0,
-      site: "",
-      sideEffects: "Startverlauf"
-    }];
+    const defaultLog = [{ date: "2026-08-02", weight: 123.4, dose: 0, site: "" }];
+    let logs = JSON.parse(localStorage.getItem('reta_app_logs')) || defaultLog;
+    let chartInstance = null;
+    let currentMode = 'weight';
 
-    var logs = [];
-    try {
-      var stored = localStorage.getItem('reta_pro_logs');
-      logs = stored ? JSON.parse(stored) : defaultInitialLog;
-    } catch(e) {
-      logs = defaultInitialLog;
-    }
-
-    function calculateSerumLevel(targetDateStr) {
-      var targetTime = new Date(targetDateStr).getTime();
-      var totalLevel = 0;
-
-      logs.forEach(function(l) {
-        if (l.dose && l.dose > 0) {
-          var entryTime = new Date(l.datetime).getTime();
-          var hoursPassed = (targetTime - entryTime) / (1000 * 60 * 60);
-          if (hoursPassed >= 0) {
-            totalLevel += l.dose * Math.pow(0.5, hoursPassed / HALF_LIFE_HOURS);
+    function calculateSerum(targetDateStr) {
+      const target = new Date(targetDateStr).getTime();
+      let serum = 0;
+      logs.forEach(l => {
+        if (l.dose > 0) {
+          const entryTime = new Date(l.date).getTime();
+          const daysPassed = (target - entryTime) / (1000 * 60 * 60 * 24);
+          if (daysPassed >= 0) {
+            serum += l.dose * Math.pow(0.5, daysPassed / HALF_LIFE_DAYS);
           }
         }
       });
-      return totalLevel;
+      return serum;
     }
 
     function addEntry() {
-      var datetime = document.getElementById('datetime').value;
-      var weight = parseFloat(document.getElementById('weight').value);
-      var dose = parseFloat(document.getElementById('dose').value) || 0;
-      var site = document.getElementById('site').value;
-      var sideEffects = document.getElementById('sideEffects').value.trim();
+      const date = document.getElementById('date').value;
+      const weight = parseFloat(document.getElementById('weight').value);
+      const dose = parseFloat(document.getElementById('dose').value) || 0;
+      const site = document.getElementById('site').value;
 
-      if (!datetime) {
-        alert('Bitte Datum angeben.');
-        return;
-      }
+      if (!date) return alert('Bitte Datum wählen');
 
-      logs.push({ 
-        datetime: datetime, 
-        weight: isNaN(weight) ? null : weight, 
-        dose: dose, 
-        site: site, 
-        sideEffects: sideEffects 
-      });
+      logs.push({ date, weight: isNaN(weight) ? null : weight, dose, site });
+      logs.sort((a,b) => new Date(a.date) - new Date(b.date));
 
-      logs.sort(function(a,b) { return new Date(a.datetime) - new Date(b.datetime); });
-      
       document.getElementById('weight').value = '';
       document.getElementById('dose').value = '';
-      document.getElementById('sideEffects').value = '';
       saveAndRender();
     }
 
+    function saveAndRender() {
+      localStorage.setItem('reta_app_logs', JSON.stringify(logs));
+      updateDashboard();
+      renderChart();
+      renderHistory();
+    }
+
     function updateDashboard() {
-      var weights = logs.filter(function(l) { return l.weight !== null; });
+      const weights = logs.filter(l => l.weight !== null);
       if (weights.length > 0) {
-        var start = weights[0].weight;
-        var current = weights[weights.length - 1].weight;
-        var diff = (current - start).toFixed(1);
+        const start = weights[0].weight;
+        const current = weights[weights.length - 1].weight;
+        const diff = (current - start).toFixed(1);
 
-        document.getElementById('startWt').innerText = start + ' kg';
-        document.getElementById('currWt').innerText = current + ' kg';
+        document.getElementById('startWt').innerText = start;
+        document.getElementById('currWt').innerText = current;
         document.getElementById('diffWt').innerText = (diff > 0 ? '+' : '') + diff + ' kg';
-      }
-
-      var activeSerum = calculateSerumLevel(new Date().toISOString());
-      document.getElementById('activeLevel').innerText = activeSerum.toFixed(2);
-
-      var doseLogs = logs.filter(function(l) { return l.site; });
-      if (doseLogs.length > 0) {
-        var lastSite = doseLogs[doseLogs.length - 1].site;
-        document.getElementById('rotationInfo').innerText = 'Zuletzt gespritzt: ' + lastSite;
       }
     }
 
-    function saveAndRender() {
-      localStorage.setItem('reta_pro_logs', JSON.stringify(logs));
-      updateDashboard();
-      renderHistory();
+    function switchChart(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.segmented button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
       renderChart();
     }
 
-    function renderHistory() {
-      var html = '';
-      var rev = logs.slice().reverse();
-      for (var i = 0; i < rev.length; i++) {
-        var l = rev[i];
-        html += '<div class="log-item">' +
-          '<div class="log-header">' +
-            '<span>' + l.datetime.replace('T', ' ') + '</span>' +
-            '<span>' + (l.weight ? l.weight + ' kg' : '') + '</span>' +
-          '</div>' +
-          '<div class="log-details">' +
-            (l.dose ? '<span class="tag tag-dose">💉 ' + l.dose + ' mg</span>' : '') +
-            (l.site ? '<span class="tag">📍 ' + l.site + '</span>' : '') +
-            (l.sideEffects ? '<span class="tag tag-side">⚠️ ' + l.sideEffects + '</span>' : '') +
-          '</div>' +
-        '</div>';
-      }
-      document.getElementById('history').innerHTML = html;
-    }
-
     function renderChart() {
-      var filtered = logs.filter(function(l) { return l.weight !== null; }).slice(-7);
-      if (filtered.length === 0) return;
+      const ctx = document.getElementById('weightChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
 
-      var maxW = Math.max.apply(Math, filtered.map(function(l) { return l.weight; }));
-      var minW = Math.min.apply(Math, filtered.map(function(l) { return l.weight; })) - 2;
+      let labels = [];
+      let data = [];
+      let color = '#0a84ff';
 
-      var chartHtml = '';
-      filtered.forEach(function(l) {
-        var pct = ((l.weight - minW) / (maxW - minW || 1)) * 100;
-        pct = Math.max(pct, 15);
-        chartHtml += '<div class="chart-bar-wrap">' +
-          '<div class="chart-bar" style="height:' + pct + '%;"></div>' +
-          '<div class="chart-label">' + l.weight + '</div>' +
-        '</div>';
-      });
-      document.getElementById('chart').innerHTML = chartHtml;
-    }
+      if (currentMode === 'weight') {
+        const filtered = logs.filter(l => l.weight !== null);
+        labels = filtered.map(l => l.date.slice(5));
+        data = filtered.map(l => l.weight);
+      } else {
+        labels = logs.map(l => l.date.slice(5));
+        data = logs.map(l => calculateSerum(l.date));
+        color = '#30d158';
+      }
 
-    function exportCSV() {
-      var csv = 'Datum;Gewicht;Dosis;Stelle;Nebenwirkungen\n';
-      logs.forEach(function(l) {
-        csv += l.datetime + ';' + (l.weight || '') + ';' + (l.dose || '') + ';' + (l.site || '') + ';' + (l.sideEffects || '') + '\n';
-      });
-      var blob = new Blob([csv], { type: 'text/csv' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'retatrutide_backup.csv';
-      a.click();
-    }
+      const gradient = ctx.createLinearGradient(0, 0, 0, 160);
+      gradient.addColorStop(0, currentMode === 'weight' ? 'rgba(10,132,255,0.35)' : 'rgba(48,209,88,0.35)');
+      gradient.addColorStop(1, 'rgba(0,0,0,0)');
 
-    function importCSV(e) {
-      var file = e.target.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function(evt) {
-        var lines = evt.target.result.split('\n').slice(1);
-        logs = [];
-        lines.forEach(function(line) {
-          var parts = line.split(';');
-          if (parts.length >= 2 && parts[0]) {
-            logs.push({
-              datetime: parts[0],
-              weight: parts[1] ? parseFloat(parts[1]) : null,
-              dose: parts[2] ? parseFloat(parts[2]) : 0,
-              site: parts[3] || '',
-              sideEffects: parts[4] || ''
-            });
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            borderColor: color,
+            borderWidth: 3,
+            backgroundColor: gradient,
+            fill: true,
+            tension: 0.35,
+            pointBackgroundColor: color,
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: '#8e8e93', font: { size: 10 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8e8e93', font: { size: 10 } } }
           }
-        });
-        saveAndRender();
-        alert('Import erfolgreich!');
-      };
-      reader.readAsText(file);
+        }
+      });
+    }
+
+    function renderHistory() {
+      document.getElementById('history').innerHTML = [...logs].reverse().map(l => `
+        <div class="log-row">
+          <div>
+            <div style="font-size:14px; font-weight:600;">${l.weight ? l.weight + ' kg' : 'Dosis-Log'}</div>
+            <div style="font-size:11px; color:var(--sub);">${l.date} ${l.site ? '• ' + l.site : ''}</div>
+          </div>
+          <div>${l.dose ? `<span class="badge">💉 ${l.dose} mg</span>` : ''}</div>
+        </div>
+      `).join('');
     }
 
     updateDashboard();
