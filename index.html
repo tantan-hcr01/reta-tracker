@@ -5,198 +5,210 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Retatrutide Tracker</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <title>Retatrutide OS</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
       --bg: #000000;
-      --card: #1c1c1e;
-      --card-sub: #2c2c2e;
-      --accent: #0a84ff;
-      --green: #30d158;
-      --text: #ffffff;
-      --sub: #8e8e93;
-      --radius: 20px;
+      --card: rgba(28, 28, 30, 0.65);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --accent-blue: #0A84FF;
+      --accent-green: #30D158;
+      --accent-purple: #BF5AF2;
+      --text: #FFFFFF;
+      --sub: #8E8E93;
+      --radius: 22px;
     }
 
     * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 
     body {
       margin: 0;
-      padding: calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 24px) 16px;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 30px) 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
       background: var(--bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Top Bar Header */
-    .top-bar { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; }
-    .header-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
-    .header-sub { font-size: 11px; color: var(--sub); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    /* Header */
+    .app-header {
+      display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;
+    }
+    .app-title { font-size: 28px; font-weight: 800; letter-spacing: -0.6px; margin: 0; }
+    .app-badge { font-size: 11px; font-weight: 700; color: var(--accent-purple); background: rgba(191, 90, 242, 0.15); padding: 4px 10px; border-radius: 20px; text-transform: uppercase; border: 1px solid rgba(191, 90, 242, 0.3); }
 
-    /* Main Chart Card */
-    .card-chart {
+    /* Frosted Glass Cards */
+    .glass-card {
       background: var(--card);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid var(--card-border);
       border-radius: var(--radius);
-      padding: 16px;
+      padding: 18px;
       margin-bottom: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+
+    /* Dashboard Metrics */
+    .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+    .metric-box {
+      background: rgba(44, 44, 46, 0.5);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .metric-box::before {
+      content: ''; position: absolute; top:0; left:0; width:100%; height:2px;
+      background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+    }
+    .metric-val { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-top: 4px; }
+    .metric-lbl { font-size: 11px; font-weight: 600; color: var(--sub); text-transform: uppercase; }
+
+    /* Chart Container */
+    .chart-box { position: relative; height: 210px; width: 100%; }
+
+    /* Dose Selector Chips */
+    .dose-selector { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+    .dose-pill {
+      background: rgba(44, 44, 46, 0.8);
       border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 12px 0;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .chart-container { position: relative; height: 170px; width: 100%; }
+    .dose-pill.active {
+      background: linear-gradient(135deg, #0A84FF 0%, #5E5CE6 100%);
+      border-color: #0A84FF;
+      box-shadow: 0 4px 15px rgba(10, 132, 255, 0.4);
+      transform: translateY(-2px);
+    }
 
-    /* Segmented Switch */
-    .seg-btn { background: var(--card-sub); border: none; color: var(--sub); padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; }
-    .seg-btn.active { background: #3a3a3c; color: #fff; }
+    /* Form Inputs */
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .input-field {
+      width: 100%; height: 50px; background: rgba(44, 44, 46, 0.8);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+      color: #fff; padding: 0 14px; font-size: 16px; font-family: inherit; outline: none;
+    }
+    .input-field:focus { border-color: var(--accent-blue); }
 
-    /* Metric Cards Horizontal Scroll */
-    .stats-scroll {
-      display: flex; gap: 10px; overflow-x: auto; margin-bottom: 16px; padding-bottom: 4px;
-      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    .btn-action {
+      width: 100%; height: 52px;
+      background: linear-gradient(135deg, #30D158 0%, #10B981 100%);
+      border: none; border-radius: 16px; color: #000;
+      font-size: 16px; font-weight: 800; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(48, 209, 88, 0.35);
+      transition: transform 0.1s ease;
     }
-    .stats-scroll::-webkit-scrollbar { display: none; }
-    .stat-pill {
-      min-width: 105px; background: var(--card); border-radius: 14px; padding: 12px;
-      border: 1px solid rgba(255,255,255,0.05); text-align: center; flex-shrink: 0;
-    }
-    .stat-val { font-size: 19px; font-weight: 700; margin-top: 2px; }
-    .stat-lbl { font-size: 10px; color: var(--sub); font-weight: 600; text-transform: uppercase; }
-
-    /* Interactive Action Panel */
-    .action-panel {
-      background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 16px;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    .panel-title { font-size: 14px; font-weight: 600; color: var(--sub); margin-bottom: 12px; }
-
-    /* Quick Dose Chips */
-    .chips-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
-    .chip {
-      background: var(--card-sub); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px;
-      padding: 10px 0; text-align: center; font-size: 13px; font-weight: 600; color: #fff; cursor: pointer;
-    }
-    .chip.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
-
-    /* Native Flex Input */
-    .input-row { display: flex; gap: 10px; margin-bottom: 12px; }
-    input {
-      flex: 1; height: 46px; background: var(--card-sub); border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 12px; color: #fff; padding: 0 12px; font-size: 16px; font-family: inherit; outline: none;
-    }
-    input:focus { border-color: var(--accent); }
-
-    .btn-main {
-      width: 100%; height: 48px; background: var(--accent); border: none; border-radius: 12px;
-      color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; transition: transform 0.1s;
-    }
-    .btn-main:active { transform: scale(0.98); opacity: 0.9; }
+    .btn-action:active { transform: scale(0.97); }
 
     /* Feed List */
-    .feed-item {
-      display: flex; justify-content: space-between; align-items: center; padding: 12px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+    .history-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
     }
-    .feed-item:last-child { border-bottom: none; }
-    .badge-dose { background: rgba(10,132,255,0.15); color: var(--accent); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+    .history-row:last-child { border-bottom: none; }
+    .pill-dose { background: rgba(10,132,255,0.15); color: var(--accent-blue); padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: 700; }
   </style>
 </head>
 <body>
 
-  <div class="top-bar">
+  <div class="app-header">
     <div>
-      <div class="header-sub">Peptid Tracker</div>
-      <div class="header-title">Retatrutide</div>
+      <div style="font-size:12px; color:var(--sub); font-weight:600; text-transform:uppercase;">GLP-1 / GIP / Glucagon</div>
+      <h1 class="app-title">Retatrutide</h1>
+    </div>
+    <span class="app-badge">Pro 2.0</span>
+  </div>
+
+  <!-- Dashboard Stats -->
+  <div class="metrics-grid">
+    <div class="metric-box">
+      <div class="metric-lbl">Start (02.08.26)</div>
+      <div class="metric-val" id="startWt">123.4 kg</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-lbl">Aktuell</div>
+      <div class="metric-val" style="color:var(--accent-blue)" id="currWt">-- kg</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-lbl">Gesamtabnahme</div>
+      <div class="metric-val" style="color:var(--accent-green)" id="diffWt">-- kg</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-lbl">Wirkstoff im Blut</div>
+      <div class="metric-val" style="color:var(--accent-purple)" id="serumVal">-- mg</div>
     </div>
   </div>
 
-  <!-- Horizontal Metric Cards -->
-  <div class="stats-scroll">
-    <div class="stat-pill">
-      <div class="stat-lbl">Start</div>
-      <div class="stat-val" id="startWt">123.4</div>
+  <!-- Dual-Axis Combined Graph Card -->
+  <div class="glass-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <span style="font-size:13px; font-weight:700; color:var(--sub);">VERLAUF & HALBWERTSZEIT</span>
+      <span style="font-size:11px; color:var(--accent-green);">● Blutspiegel  <span style="color:var(--accent-blue);">● Gewicht</span></span>
     </div>
-    <div class="stat-pill">
-      <div class="stat-lbl">Aktuell</div>
-      <div class="stat-val" style="color:var(--accent)" id="currWt">--</div>
-    </div>
-    <div class="stat-pill">
-      <div class="stat-lbl">Abnahme</div>
-      <div class="stat-val" style="color:var(--green)" id="diffWt">--</div>
-    </div>
-    <div class="stat-pill">
-      <div class="stat-lbl">Blut-Spiegel</div>
-      <div class="stat-val" id="serumVal">-- mg</div>
+    <div class="chart-box">
+      <canvas id="mainChart"></canvas>
     </div>
   </div>
 
-  <!-- Main Chart -->
-  <div class="card-chart">
-    <div class="chart-header">
-      <span style="font-size:13px; font-weight:600; color:var(--sub);" id="chartTitle">GEWICHTSVERLAUF</span>
-      <div>
-        <button class="seg-btn active" id="btnWeight" onclick="switchMode('weight')">Gewicht</button>
-        <button class="seg-btn" id="btnSerum" onclick="switchMode('serum')">Wirkstoff</button>
-      </div>
-    </div>
-    <div class="chart-container">
-      <canvas id="appChart"></canvas>
-    </div>
-  </div>
-
-  <!-- Quick Log Panel -->
-  <div class="action-panel">
-    <div class="panel-title">SCHNELL-EINTRAG</div>
+  <!-- Interactive Input Panel -->
+  <div class="glass-card">
+    <div style="font-size:13px; font-weight:700; color:var(--sub); margin-bottom:12px;">QUICK LOG</div>
     
-    <!-- Quick Dose Selector -->
-    <div class="chips-grid">
-      <div class="chip" onclick="selectDose(0, this)">Keine</div>
-      <div class="chip" onclick="selectDose(1.0, this)">1.0 mg</div>
-      <div class="chip" onclick="selectDose(2.0, this)">2.0 mg</div>
-      <div class="chip" onclick="selectDose(2.5, this)">2.5 mg</div>
+    <div class="dose-selector">
+      <div class="dose-pill" onclick="selectDose(0, this)">Keine</div>
+      <div class="dose-pill" onclick="selectDose(1.0, this)">1.0 mg</div>
+      <div class="dose-pill" onclick="selectDose(2.0, this)">2.0 mg</div>
+      <div class="dose-pill" onclick="selectDose(2.5, this)">2.5 mg</div>
     </div>
 
     <div class="input-row">
-      <input type="number" step="0.1" id="weight" placeholder="Gewicht (kg)" inputmode="decimal">
-      <input type="date" id="date">
+      <input type="number" step="0.1" id="weightInput" class="input-field" placeholder="Gewicht (kg)" inputmode="decimal">
+      <input type="date" id="dateInput" class="input-field">
     </div>
 
-    <button class="btn-main" onclick="submitLog()">Eintrag Speichern</button>
+    <button class="btn-action" onclick="saveEntry()">Eintrag Speichern</button>
   </div>
 
-  <!-- History -->
-  <div class="card-chart" style="padding-top:12px;">
-    <div style="font-size:12px; font-weight:600; color:var(--sub); margin-bottom:6px;">VERLAUF</div>
-    <div id="historyFeed"></div>
+  <!-- History Log -->
+  <div class="glass-card">
+    <div style="font-size:13px; font-weight:700; color:var(--sub); margin-bottom:8px;">LOGBUCH</div>
+    <div id="historyLog"></div>
   </div>
 
   <script>
-    document.getElementById('date').valueAsDate = new Date();
+    document.getElementById('dateInput').valueAsDate = new Date();
 
-    const HALF_LIFE = 6; // Halbwertszeit Retatrutide: 6 Tage
+    const HALF_LIFE = 6; // 6 Tage Halbwertszeit
     const defaultData = [{ date: "2026-08-02", weight: 123.4, dose: 0 }];
-    let logs = JSON.parse(localStorage.getItem('reta_ux_logs')) || defaultData;
-    
-    let selectedDoseVal = 0;
-    let currentMode = 'weight';
+    let logs = JSON.parse(localStorage.getItem('reta_pro_v2')) || defaultData;
+    let selectedDose = 0;
     let chartInstance = null;
 
     function selectDose(val, el) {
-      document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
-      el.classList.add('selected');
-      selectedDoseVal = val;
+      document.querySelectorAll('.dose-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      selectedDose = val;
     }
 
+    // Biologisch korrekte Bateman-Funktion (Anflutung + 6-Tage-Halbwertszeit Abbau)
     function calculateSerum(targetDateStr) {
       let total = 0;
       const targetTime = new Date(targetDateStr).getTime();
-      
       logs.forEach(l => {
         if (l.dose > 0) {
           const entryTime = new Date(l.date).getTime();
           const daysPassed = (targetTime - entryTime) / (1000 * 60 * 60 * 24);
           if (daysPassed >= 0) {
-            // Bateman-Anflutung + Elimination
             total += l.dose * 1.35 * (Math.exp(-(Math.LN2 / HALF_LIFE) * daysPassed) - Math.exp(-1.2 * daysPassed));
           }
         }
@@ -204,42 +216,34 @@
       return total;
     }
 
-    function submitLog() {
-      const date = document.getElementById('date').value;
-      const weight = parseFloat(document.getElementById('weight').value);
+    function saveEntry() {
+      const date = document.getElementById('dateInput').value;
+      const weight = parseFloat(document.getElementById('weightInput').value);
 
       if (!date) return alert('Bitte Datum angeben');
 
-      logs.push({ date, weight: isNaN(weight) ? null : weight, dose: selectedDoseVal });
+      logs.push({ date, weight: isNaN(weight) ? null : weight, dose: selectedDose });
       logs.sort((a,b) => new Date(a.date) - new Date(b.date));
 
-      document.getElementById('weight').value = '';
-      selectedDoseVal = 0;
-      document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
-      
-      renderAll();
+      document.getElementById('weightInput').value = '';
+      selectedDose = 0;
+      document.querySelectorAll('.dose-pill').forEach(p => p.classList.remove('active'));
+
+      renderApp();
     }
 
-    function switchMode(mode) {
-      currentMode = mode;
-      document.getElementById('btnWeight').classList.toggle('active', mode === 'weight');
-      document.getElementById('btnSerum').classList.toggle('active', mode === 'serum');
-      document.getElementById('chartTitle').innerText = mode === 'weight' ? 'GEWICHTSVERLAUF' : 'WIRKSTOFF IM BLUT (MG)';
-      renderChart();
-    }
+    function renderApp() {
+      localStorage.setItem('reta_pro_v2', JSON.stringify(logs));
 
-    function renderAll() {
-      localStorage.setItem('reta_ux_logs', JSON.stringify(logs));
-      
-      // Dashboard Stats
+      // Metrics Dashboard
       const weights = logs.filter(l => l.weight !== null);
       if (weights.length > 0) {
         const start = weights[0].weight;
         const current = weights[weights.length - 1].weight;
         const diff = (current - start).toFixed(1);
 
-        document.getElementById('startWt').innerText = start;
-        document.getElementById('currWt').innerText = current;
+        document.getElementById('startWt').innerText = start + ' kg';
+        document.getElementById('currWt').innerText = current + ' kg';
         document.getElementById('diffWt').innerText = (diff > 0 ? '+' : '') + diff + ' kg';
       }
 
@@ -247,79 +251,100 @@
       document.getElementById('serumVal').innerText = activeSerum.toFixed(2) + ' mg';
 
       renderChart();
-      renderFeed();
+      renderLog();
     }
 
     function renderChart() {
-      const ctx = document.getElementById('appChart').getContext('2d');
+      const ctx = document.getElementById('mainChart').getContext('2d');
       if (chartInstance) chartInstance.destroy();
 
       let labels = [];
-      let data = [];
-      let color = '#0a84ff';
+      let weightData = [];
+      let serumData = [];
 
-      if (currentMode === 'weight') {
-        const filtered = logs.filter(l => l.weight !== null);
-        labels = filtered.map(l => l.date.slice(5));
-        data = filtered.map(l => l.weight);
-      } else {
-        if (logs.length > 0) {
-          const startDate = new Date(logs[0].date);
-          const endDate = new Date();
-          endDate.setDate(endDate.getDate() + 5);
+      if (logs.length > 0) {
+        const startDate = new Date(logs[0].date);
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + 6); // 6 Tage Zukunfts-Projektion
 
-          for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-            const dateStr = d.toISOString().split('T')[0];
-            labels.push(dateStr.slice(5));
-            data.push(calculateSerum(dateStr).toFixed(2));
-          }
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+          const dateStr = d.toISOString().split('T')[0];
+          labels.push(dateStr.slice(5));
+
+          const log = logs.find(l => l.date === dateStr && l.weight !== null);
+          weightData.push(log ? log.weight : null);
+          serumData.push(calculateSerum(dateStr).toFixed(2));
         }
-        color = '#30d158';
       }
 
-      const gradient = ctx.createLinearGradient(0, 0, 0, 150);
-      gradient.addColorStop(0, currentMode === 'weight' ? 'rgba(10,132,255,0.3)' : 'rgba(48,209,88,0.3)');
-      gradient.addColorStop(1, 'rgba(0,0,0,0)');
+      const serumGradient = ctx.createLinearGradient(0, 0, 0, 180);
+      serumGradient.addColorStop(0, 'rgba(48, 209, 88, 0.35)');
+      serumGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
       chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
           labels: labels,
-          datasets: [{
-            data: data,
-            borderColor: color,
-            borderWidth: 2.5,
-            backgroundColor: gradient,
-            fill: true,
-            tension: 0.35,
-            pointRadius: currentMode === 'weight' ? 3 : 0
-          }]
+          datasets: [
+            {
+              label: 'Gewicht (kg)',
+              data: weightData,
+              borderColor: '#0A84FF',
+              backgroundColor: '#0A84FF',
+              borderWidth: 3,
+              tension: 0.2,
+              spanGaps: true,
+              yAxisID: 'yWeight',
+              pointRadius: 4,
+              pointHoverRadius: 6
+            },
+            {
+              label: 'Wirkstoff (mg)',
+              data: serumData,
+              borderColor: '#30D158',
+              backgroundColor: serumGradient,
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4,
+              yAxisID: 'ySerum',
+              pointRadius: 0
+            }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { display: false }, ticks: { color: '#8e8e93', font: { size: 10 } } },
-            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8e8e93', font: { size: 10 } } }
+            x: { grid: { display: false }, ticks: { color: '#8E8E93', font: { size: 10 } } },
+            yWeight: {
+              type: 'linear', position: 'left',
+              grid: { color: 'rgba(255,255,255,0.05)' },
+              ticks: { color: '#0A84FF', font: { size: 10 } }
+            },
+            ySerum: {
+              type: 'linear', position: 'right',
+              grid: { display: false },
+              ticks: { color: '#30D158', font: { size: 10 } }
+            }
           }
         }
       });
     }
 
-    function renderFeed() {
-      document.getElementById('historyFeed').innerHTML = [...logs].reverse().map(l => `
-        <div class="feed-item">
+    function renderLog() {
+      document.getElementById('historyLog').innerHTML = [...logs].reverse().map(l => `
+        <div class="history-row">
           <div>
-            <div style="font-size:14px; font-weight:600;">${l.weight ? l.weight + ' kg' : 'Injektion'}</div>
+            <div style="font-size:15px; font-weight:700;">${l.weight ? l.weight + ' kg' : 'Dosis'}</div>
             <div style="font-size:11px; color:var(--sub);">${l.date}</div>
           </div>
-          <div>${l.dose ? `<span class="badge-dose">💉 ${l.dose} mg</span>` : ''}</div>
+          <div>${l.dose ? `<span class="pill-dose">💉 ${l.dose} mg</span>` : ''}</div>
         </div>
       `).join('');
     }
 
-    renderAll();
+    renderApp();
   </script>
 </body>
 </html>
