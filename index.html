@@ -17,6 +17,7 @@
       --accent-green: #30D158;
       --accent-green-glow: rgba(48, 209, 88, 0.4);
       --accent-purple: #BF5AF2;
+      --danger: #FF453A;
       --text: #FFFFFF;
       --sub: #8E8E93;
       --radius: 24px;
@@ -33,7 +34,20 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes toastPop {
+      0% { opacity: 0; transform: translate(-50%, 20px) scale(0.9); }
+      15%, 85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -10px) scale(0.95); }
+    }
+
+    .app-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px; animation: slideDown 0.5s ease;
+    }
     .header-sub { font-size: 11px; color: var(--sub); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
     .app-title { font-size: 30px; font-weight: 800; letter-spacing: -0.8px; margin: 0; background: linear-gradient(180deg, #FFFFFF 0%, #A1A1A6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
@@ -52,12 +66,15 @@
       padding: 20px;
       margin-bottom: 16px;
       box-shadow: 0 16px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.15);
+      animation: slideDown 0.6s ease;
     }
 
     .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
     .metric-tile {
-      background: rgba(30, 30, 36, 0.5); border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 18px; padding: 14px 16px; position: relative; overflow: hidden;
+      background: rgba(30, 30, 36, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px; padding: 14px 16px;
+      position: relative; overflow: hidden;
     }
     .metric-lbl { font-size: 11px; font-weight: 600; color: var(--sub); text-transform: uppercase; }
     .metric-val { font-size: 24px; font-weight: 800; letter-spacing: -0.6px; margin-top: 4px; }
@@ -70,26 +87,38 @@
     .chart-box { position: relative; height: 230px; width: 100%; margin-top: 10px; }
     .section-title { font-size: 12px; font-weight: 700; color: var(--sub); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px; }
 
-    /* Interactive Picker Trigger Fields */
-    .picker-trigger-grid { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 8px; margin-bottom: 14px; }
-    .field-wrapper { display: flex; flex-direction: column; }
-    .field-wrapper label { font-size: 10px; font-weight: 700; color: var(--sub); text-transform: uppercase; margin-bottom: 4px; margin-left: 2px; }
-
-    .picker-btn {
-      width: 100%; height: 50px; background: rgba(35, 35, 42, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 14px;
-      color: #FFF; font-size: 16px; font-weight: 700; display: flex;
-      align-items: center; justify-content: space-between; padding: 0 12px;
-      cursor: pointer; transition: all 0.2s ease;
+    .dose-scroll {
+      display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 14px;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
     }
-    .picker-btn:active { transform: scale(0.97); border-color: var(--accent-blue); }
-    .picker-btn .unit { font-size: 12px; color: var(--sub); font-weight: 500; }
-
-    .input-date {
-      width: 100%; height: 50px; background: rgba(35, 35, 42, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 14px;
-      color: #FFF; padding: 0 10px; font-size: 15px; font-family: inherit; outline: none;
+    .dose-scroll::-webkit-scrollbar { display: none; }
+    
+    .dose-chip {
+      min-width: 68px; flex-shrink: 0;
+      background: rgba(44, 44, 50, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px; padding: 12px 0;
+      text-align: center; font-size: 14px; font-weight: 700; color: #FFF; cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
+    .dose-chip.active {
+      background: linear-gradient(135deg, #0A84FF 0%, #5E5CE6 100%);
+      border-color: rgba(255,255,255,0.4);
+      box-shadow: 0 6px 20px var(--accent-blue-glow);
+      transform: translateY(-2px);
+    }
+
+    .input-grid { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 8px; margin-bottom: 14px; }
+    .input-wrapper { display: flex; flex-direction: column; }
+    .input-wrapper label { font-size: 10px; font-weight: 700; color: var(--sub); text-transform: uppercase; margin-bottom: 4px; margin-left: 2px; }
+
+    .input-styled {
+      width: 100%; height: 48px; background: rgba(35, 35, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px;
+      color: #FFF; padding: 0 12px; font-size: 16px; font-family: inherit; outline: none;
+      user-select: text;
+    }
+    .input-styled:focus { border-color: var(--accent-blue); box-shadow: 0 0 12px var(--accent-blue-glow); }
 
     .btn-submit {
       width: 100%; height: 54px;
@@ -97,59 +126,40 @@
       border: none; border-radius: 18px; color: #000;
       font-size: 17px; font-weight: 800; cursor: pointer;
       box-shadow: 0 6px 25px var(--accent-green-glow);
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .btn-submit:active { transform: scale(0.96); }
 
-    /* iOS Wheel Modal Drawer */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-      z-index: 999; display: flex; flex-direction: column; justify-content: flex-end;
-      opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+    .history-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
     }
-    .modal-overlay.open { opacity: 1; pointer-events: auto; }
-
-    .modal-drawer {
-      background: #1C1C1E; border-radius: 28px 28px 0 0;
-      border-top: 1px solid rgba(255, 255, 255, 0.15); padding: 20px 20px calc(env(safe-area-inset-bottom) + 20px) 20px;
-      transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .modal-overlay.open .modal-drawer { transform: translateY(0); }
-
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .modal-title { font-size: 17px; font-weight: 700; color: #FFF; }
-    .modal-done-btn { background: none; border: none; color: var(--accent-blue); font-size: 17px; font-weight: 700; cursor: pointer; }
-
-    /* Wheel Scroll Container */
-    .wheel-container {
-      position: relative; height: 200px; overflow: hidden;
-    }
-    .wheel-selection-lens {
-      position: absolute; top: 80px; left: 0; right: 0; height: 40px;
-      background: rgba(255, 255, 255, 0.08); border-top: 1px solid rgba(255,255,255,0.15);
-      border-bottom: 1px solid rgba(255,255,255,0.15); border-radius: 10px; pointer-events: none;
-    }
-    .wheel-scroller {
-      height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory;
-      padding: 80px 0; scrollbar-width: none;
-    }
-    .wheel-scroller::-webkit-scrollbar { display: none; }
-    .wheel-item {
-      height: 40px; display: flex; align-items: center; justify-content: center;
-      font-size: 20px; font-weight: 600; color: var(--sub); scroll-snap-align: center;
-      transition: color 0.15s ease, transform 0.15s ease;
-    }
-    .wheel-item.selected { color: #FFF; font-size: 24px; font-weight: 800; }
-
-    .history-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
     .history-item:last-child { border-bottom: none; }
-    .pill-dose-tag { background: rgba(10, 132, 255, 0.15); border: 1px solid rgba(10, 132, 255, 0.3); color: var(--accent-blue); padding: 4px 10px; border-radius: 10px; font-size: 12px; font-weight: 700; }
+    
+    .pill-dose-tag {
+      background: rgba(10, 132, 255, 0.15); border: 1px solid rgba(10, 132, 255, 0.3);
+      color: var(--accent-blue); padding: 4px 10px; border-radius: 10px; font-size: 12px; font-weight: 700;
+    }
+
+    .btn-delete {
+      background: rgba(255, 69, 58, 0.15); border: 1px solid rgba(255, 69, 58, 0.3);
+      color: var(--danger); border-radius: 10px; padding: 6px 10px;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+    .btn-delete:active { transform: scale(0.9); }
 
     #toast {
       position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
       background: rgba(255, 255, 255, 0.95); color: #000;
       padding: 12px 24px; border-radius: 30px; font-size: 14px; font-weight: 700;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; z-index: 9999; pointer-events: none;
+    }
+
+    .info-banner {
+      background: rgba(191, 90, 242, 0.08); border: 1px solid rgba(191, 90, 242, 0.2);
+      border-radius: 14px; padding: 10px 12px; font-size: 11px; color: #E5D4F3; margin-top: 10px;
+      display: flex; justify-content: space-between; align-items: center;
     }
   </style>
 </head>
@@ -196,27 +206,37 @@
     <div class="chart-box">
       <canvas id="heroChart"></canvas>
     </div>
+    <div class="info-banner">
+      <span>💡 Grüne Kurve = Aktiver Restspiegel im Körper</span>
+      <span style="font-weight:700;">HWZ 6 Tage</span>
+    </div>
   </div>
 
   <div class="glass-card">
-    <div class="section-title">Schnell-Eintrag</div>
+    <div class="section-title">Schnell-Dosis wählen</div>
     
-    <div class="picker-trigger-grid">
-      <div class="field-wrapper">
+    <div class="dose-scroll">
+      <div class="dose-chip" onclick="selectChip(0, this)">0 mg</div>
+      <div class="dose-chip" onclick="selectChip(1.0, this)">1.0 mg</div>
+      <div class="dose-chip" onclick="selectChip(2.0, this)">2.0 mg</div>
+      <div class="dose-chip" onclick="selectChip(4.0, this)">4.0 mg</div>
+      <div class="dose-chip" onclick="selectChip(6.0, this)">6.0 mg</div>
+      <div class="dose-chip" onclick="selectChip(9.0, this)">9.0 mg</div>
+      <div class="dose-chip" onclick="selectChip(12.0, this)">12.0 mg</div>
+    </div>
+
+    <div class="input-grid">
+      <div class="input-wrapper">
         <label>Gewicht</label>
-        <button class="picker-btn" onclick="openPicker('weight')">
-          <span id="weightValDisplay">--</span> <span class="unit">kg</span>
-        </button>
+        <input type="number" step="0.1" id="weightInput" class="input-styled" placeholder="kg" inputmode="decimal">
       </div>
-      <div class="field-wrapper">
+      <div class="input-wrapper">
         <label>Dosis</label>
-        <button class="picker-btn" onclick="openPicker('dose')">
-          <span id="doseValDisplay">0.0</span> <span class="unit">mg</span>
-        </button>
+        <input type="number" step="0.1" id="doseInput" class="input-styled" placeholder="mg" inputmode="decimal" oninput="resetChips()">
       </div>
-      <div class="field-wrapper">
+      <div class="input-wrapper">
         <label>Datum</label>
-        <input type="date" id="dateInput" class="input-date">
+        <input type="date" id="dateInput" class="input-styled">
       </div>
     </div>
 
@@ -228,20 +248,6 @@
     <div id="historyFeed"></div>
   </div>
 
-  <!-- Scroll Wheel Modal -->
-  <div class="modal-overlay" id="pickerModal">
-    <div class="modal-drawer">
-      <div class="modal-header">
-        <span class="modal-title" id="modalTitle">Gewicht wählen</span>
-        <button class="modal-done-btn" onclick="closePicker()">Fertig</button>
-      </div>
-      <div class="wheel-container">
-        <div class="wheel-selection-lens"></div>
-        <div class="wheel-scroller" id="wheelScroller" onscroll="onWheelScroll()"></div>
-      </div>
-    </div>
-  </div>
-
   <script>
     document.getElementById('dateInput').valueAsDate = new Date();
 
@@ -250,106 +256,39 @@
     let logs = JSON.parse(localStorage.getItem('reta_pro_v5')) || defaultData;
     let chartInstance = null;
 
-    let activePickerMode = 'weight'; // 'weight' oder 'dose'
-    let currentSelectedWeight = 117.5;
-    let currentSelectedDose = 2.0;
-
     function triggerToast(text) {
       const toast = document.getElementById('toast');
       toast.innerText = text;
       toast.style.display = 'block';
-      setTimeout(() => { toast.style.display = 'none'; }, 2000);
+      toast.style.animation = 'toastPop 2.2s ease forwards';
+      setTimeout(() => { toast.style.display = 'none'; }, 2200);
     }
 
-    // Modal & Wheel Picker Logic
-    function openPicker(mode) {
-      activePickerMode = mode;
-      const modal = document.getElementById('pickerModal');
-      const scroller = document.getElementById('wheelScroller');
-      const title = document.getElementById('modalTitle');
+    function selectChip(val, el) {
+      document.querySelectorAll('.dose-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('doseInput').value = val > 0 ? val : '';
+    }
+
+    function resetChips() {
+      document.querySelectorAll('.dose-chip').forEach(c => c.classList.remove('active'));
+    }
+
+    function getDoseContributionAt(targetDateStr, doseDateStr, doseMg) {
+      const daysPassed = (new Date(targetDateStr) - new Date(doseDateStr)) / (1000 * 60 * 60 * 24);
+      if (daysPassed < 0) return 0;
       
-      scroller.innerHTML = '';
-      let targetIndex = 0;
-
-      if (mode === 'weight') {
-        title.innerText = "Gewicht wählen (kg)";
-        // Letztes Gewicht holen
-        const weights = logs.filter(l => l.weight !== null);
-        const lastW = weights.length > 0 ? weights[weights.length - 1].weight : 117.5;
-        currentSelectedWeight = lastW;
-
-        let itemsHtml = '';
-        let index = 0;
-        // Erzeuge Werte von 50.0 kg bis 180.0 kg in 0,1er Schritten
-        for (let w = 50.0; w <= 180.0; w = Math.round((w + 0.1) * 10) / 10) {
-          if (Math.abs(w - lastW) < 0.05) targetIndex = index;
-          itemsHtml += `<div class="wheel-item" data-val="${w.toFixed(1)}">${w.toFixed(1)} kg</div>`;
-          index++;
-        }
-        scroller.innerHTML = itemsHtml;
-
-      } else {
-        title.innerText = "Dosis wählen (mg)";
-        let itemsHtml = '';
-        let index = 0;
-        // Erzeuge Dosen von 0.0 mg bis 15.0 mg in 0,5er Schritten
-        for (let d = 0; d <= 15.0; d += 0.5) {
-          if (Math.abs(d - currentSelectedDose) < 0.1) targetIndex = index;
-          itemsHtml += `<div class="wheel-item" data-val="${d.toFixed(1)}">${d.toFixed(1)} mg</div>`;
-          index++;
-        }
-        scroller.innerHTML = itemsHtml;
-      }
-
-      modal.classList.add('open');
-
-      // Automatisch zum Startwert scrollen
-      setTimeout(() => {
-        scroller.scrollTop = targetIndex * 40;
-        highlightWheelItem();
-      }, 50);
+      const ke = Math.LN2 / HALF_LIFE_DAYS;
+      const ka = 1.2;
+      const normFactor = 1.35;
+      return doseMg * normFactor * (Math.exp(-ke * daysPassed) - Math.exp(-ka * daysPassed));
     }
 
-    function closePicker() {
-      document.getElementById('pickerModal').classList.remove('open');
-    }
-
-    function onWheelScroll() {
-      highlightWheelItem();
-    }
-
-    function highlightWheelItem() {
-      const scroller = document.getElementById('wheelScroller');
-      const items = scroller.querySelectorAll('.wheel-item');
-      const index = Math.round(scroller.scrollTop / 40);
-
-      items.forEach((item, idx) => {
-        if (idx === index) {
-          item.classList.add('selected');
-          const val = parseFloat(item.getAttribute('data-val'));
-          if (activePickerMode === 'weight') {
-            currentSelectedWeight = val;
-            document.getElementById('weightValDisplay').innerText = val.toFixed(1);
-          } else {
-            currentSelectedDose = val;
-            document.getElementById('doseValDisplay').innerText = val.toFixed(1);
-          }
-        } else {
-          item.classList.remove('selected');
-        }
-      });
-    }
-
-    // Biologische Formeln
     function calculateSerum(targetDateStr) {
       let total = 0;
-      const targetTime = new Date(targetDateStr).getTime();
       logs.forEach(l => {
         if (l.dose > 0) {
-          const daysPassed = (targetTime - new Date(l.date).getTime()) / (1000 * 60 * 60 * 24);
-          if (daysPassed >= 0) {
-            total += l.dose * 1.35 * (Math.exp(-(Math.LN2 / HALF_LIFE_DAYS) * daysPassed) - Math.exp(-1.2 * daysPassed));
-          }
+          total += getDoseContributionAt(targetDateStr, l.date, l.dose);
         }
       });
       return total;
@@ -357,13 +296,28 @@
 
     function saveLogEntry() {
       const date = document.getElementById('dateInput').value;
+      const weight = parseFloat(document.getElementById('weightInput').value);
+      const dose = parseFloat(document.getElementById('doseInput').value) || 0;
+
       if (!date) return alert('Bitte Datum angeben.');
 
-      logs.push({ date, weight: currentSelectedWeight, dose: currentSelectedDose });
+      logs.push({ date, weight: isNaN(weight) ? null : weight, dose });
       logs.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+      document.getElementById('weightInput').value = '';
+      document.getElementById('doseInput').value = '';
+      resetChips();
 
       triggerToast("Eintrag gespeichert ✨");
       renderUI();
+    }
+
+    function deleteLogEntry(index) {
+      if (confirm("Möchtest du diesen Eintrag wirklich löschen?")) {
+        logs.splice(index, 1);
+        triggerToast("Eintrag gelöscht 🗑️");
+        renderUI();
+      }
     }
 
     function renderUI() {
@@ -379,14 +333,23 @@
         document.getElementById('currWt').innerText = current + ' kg';
         document.getElementById('diffWt').innerText = (diff > 0 ? '+' : '') + diff + ' kg';
         document.getElementById('lastWeightDate').innerText = 'Stand: ' + weights[weights.length - 1].date.slice(5);
-        
-        // Initial-Anzeige für den Picker-Button setzen
-        document.getElementById('weightValDisplay').innerText = current.toFixed(1);
+      } else {
+        document.getElementById('startWt').innerText = '-- kg';
+        document.getElementById('currWt').innerText = '-- kg';
+        document.getElementById('diffWt').innerText = '-- kg';
       }
 
       const todayStr = new Date().toISOString().split('T')[0];
       const activeSerum = calculateSerum(todayStr);
       document.getElementById('serumVal').innerText = activeSerum.toFixed(2) + ' mg';
+
+      const doseLogs = logs.filter(l => l.dose > 0);
+      if (doseLogs.length > 0) {
+        const lastDose = doseLogs[doseLogs.length - 1];
+        document.getElementById('serumPeakInfo').innerText = `Zuletzt: ${lastDose.dose}mg (${lastDose.date.slice(5)})`;
+      } else {
+        document.getElementById('serumPeakInfo').innerText = 'HWZ: ~6 Tage';
+      }
 
       renderChart();
       renderFeed();
@@ -470,15 +433,22 @@
     }
 
     function renderFeed() {
-      document.getElementById('historyFeed').innerHTML = [...logs].reverse().map(l => `
-        <div class="history-item">
-          <div>
-            <div style="font-size:15px; font-weight:800;">${l.weight ? l.weight + ' kg' : 'Eintrag'}</div>
-            <div style="font-size:11px; color:var(--sub); margin-top:2px;">${l.date}</div>
+      const reversedLogs = [...logs].reverse();
+      document.getElementById('historyFeed').innerHTML = reversedLogs.map((l, revIndex) => {
+        const actualIndex = logs.length - 1 - revIndex;
+        return `
+          <div class="history-item">
+            <div>
+              <div style="font-size:15px; font-weight:800;">${l.weight ? l.weight + ' kg' : 'Spritzen-Dosis'}</div>
+              <div style="font-size:11px; color:var(--sub); margin-top:2px;">${l.date}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              ${l.dose ? `<span class="pill-dose-tag">💉 ${l.dose} mg</span>` : ''}
+              <button class="btn-delete" onclick="deleteLogEntry(${actualIndex})">🗑️</button>
+            </div>
           </div>
-          <div>${l.dose ? `<span class="pill-dose-tag">💉 ${l.dose} mg</span>` : ''}</div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     renderUI();
