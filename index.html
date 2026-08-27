@@ -6,8 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Retatrutide">
-  <title>Retatrutide Pro Tracker</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>Retatrutide Tracker</title>
   <style>
     :root {
       --bg: #090d16;
@@ -16,46 +15,30 @@
       --accent: #38bdf8;
       --text: #f8fafc;
       --sub: #94a3b8;
-      --danger: #f43f5e;
-      --success: #34d399;
       --radius: 18px;
     }
 
     * {
       -webkit-tap-highlight-color: transparent;
-      -webkit-touch-callout: none;
       box-sizing: border-box;
     }
 
     body {
       margin: 0;
       padding: calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 20px) 16px;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
       background: var(--bg);
       color: var(--text);
-      -webkit-font-smoothing: antialiased;
     }
 
-    h2 {
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      margin: 8px 0 16px 0;
-    }
-
-    h3 {
-      font-size: 16px;
-      font-weight: 600;
-      margin: 0 0 12px 0;
-      color: #e2e8f0;
-    }
+    h2 { font-size: 24px; font-weight: 700; margin: 8px 0 16px 0; }
+    h3 { font-size: 16px; font-weight: 600; margin: 0 0 12px 0; color: #e2e8f0; }
 
     .card {
       background: var(--card);
       padding: 16px;
       border-radius: var(--radius);
       margin-bottom: 14px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
       border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
@@ -71,22 +54,10 @@
       padding: 12px;
       border-radius: 14px;
       text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.03);
     }
 
-    .stat-val {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--accent);
-      letter-spacing: -0.3px;
-    }
-
-    .stat-lbl {
-      font-size: 11px;
-      color: var(--sub);
-      margin-top: 2px;
-      font-weight: 500;
-    }
+    .stat-val { font-size: 18px; font-weight: 700; color: var(--accent); }
+    .stat-lbl { font-size: 11px; color: var(--sub); margin-top: 2px; }
 
     input, button, select {
       width: 100%;
@@ -95,7 +66,7 @@
       margin-top: 8px;
       border-radius: 12px;
       border: none;
-      font-size: 16px; /* Verhindert automatisches Zoomen unter iOS */
+      font-size: 16px;
       font-family: inherit;
       appearance: none;
       -webkit-appearance: none;
@@ -107,22 +78,11 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    input:focus, select:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
     button {
       background: var(--accent);
       color: #0f172a;
       font-weight: 600;
       cursor: pointer;
-      transition: opacity 0.15s ease, transform 0.1s ease;
-    }
-
-    button:active {
-      opacity: 0.8;
-      transform: scale(0.98);
     }
 
     .btn-sub {
@@ -136,16 +96,11 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    .log-item:last-child {
-      border-bottom: none;
-    }
-
     .log-header {
       display: flex;
       justify-content: space-between;
       font-weight: 600;
       font-size: 15px;
-      margin-bottom: 4px;
     }
 
     .log-details {
@@ -160,7 +115,6 @@
       padding: 4px 8px;
       border-radius: 6px;
       font-size: 11px;
-      font-weight: 500;
     }
 
     .tag-dose { background: #0284c7; color: #fff; }
@@ -173,7 +127,39 @@
       font-size: 13px;
       border-radius: 10px;
       margin-bottom: 14px;
-      color: #e2e8f0;
+    }
+
+    /* Inline Simple Chart */
+    .chart-container {
+      width: 100%;
+      height: 150px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      padding-top: 20px;
+    }
+
+    .chart-bar-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .chart-bar {
+      width: 100%;
+      background: var(--accent);
+      border-radius: 4px 4px 0 0;
+      min-height: 4px;
+    }
+
+    .chart-label {
+      font-size: 9px;
+      color: var(--sub);
+      margin-top: 4px;
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -186,7 +172,7 @@
     <div class="stat-box"><div class="stat-val" id="startWt">--</div><div class="stat-lbl">Startgewicht</div></div>
     <div class="stat-box"><div class="stat-val" id="currWt">--</div><div class="stat-lbl">Aktuell</div></div>
     <div class="stat-box"><div class="stat-val" id="diffWt">--</div><div class="stat-lbl">Gesamtabnahme</div></div>
-    <div class="stat-box"><div class="stat-val" id="activeLevel">--</div><div class="stat-lbl">Est. Wirkstoff im Blut</div></div>
+    <div class="stat-box"><div class="stat-val" id="activeLevel">--</div><div class="stat-lbl">Est. Wirkstoff (mg)</div></div>
   </div>
 
   <div id="rotationInfo" class="rotation-alert">Nächste Injektion: Stelle wählen...</div>
@@ -210,24 +196,16 @@
     <button onclick="addEntry()">Eintrag Speichern</button>
   </div>
 
-  <!-- Chart Options -->
+  <!-- Graph -->
   <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <h3>Verlauf</h3>
-      <select id="chartView" onchange="renderChart()" style="width:auto; height:36px; padding:0 10px; margin:0; font-size:13px;">
-        <option value="weight">Gewicht (kg)</option>
-        <option value="serum">Wirkstoff-Spiegel (mg)</option>
-      </select>
-    </div>
-    <canvas id="mainChart"></canvas>
+    <h3>Gewichtsverlauf (Letzte Einträge)</h3>
+    <div class="chart-container" id="chart"></div>
   </div>
 
-  <!-- Goal Setup & Data Export -->
+  <!-- Backup -->
   <div class="card">
-    <h3>Einstellungen & Backup</h3>
-    <input type="number" step="0.1" id="targetInput" placeholder="Zielgewicht (kg)" inputmode="decimal">
-    <button class="btn-sub" onclick="setTarget()">Zielgewicht festlegen</button>
-    <div class="grid" style="margin-top:10px; margin-bottom:0;">
+    <h3>Sicherung</h3>
+    <div class="grid" style="margin-bottom:0;">
       <button class="btn-sub" onclick="exportCSV()">CSV Export</button>
       <button class="btn-sub" onclick="document.getElementById('importFile').click()">CSV Import</button>
     </div>
@@ -241,15 +219,13 @@
   </div>
 
   <script>
-    const HALF_LIFE_HOURS = 144; // Retatrutide Halbwertszeit: ~6 Tage
+    var HALF_LIFE_HOURS = 144;
     
-    // Datum/Uhrzeit auf jetzt setzen
-    const now = new Date();
+    var now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     document.getElementById('datetime').value = now.toISOString().slice(0,16);
 
-    // Initialisierung mit Startgewicht am 02.08.2026 (123,4 kg)
-    const defaultInitialLog = [{
+    var defaultInitialLog = [{
       datetime: "2026-08-02T08:00",
       weight: 123.4,
       dose: 0,
@@ -257,27 +233,22 @@
       sideEffects: "Startverlauf"
     }];
 
-    let logs = JSON.parse(localStorage.getItem('reta_pro_logs')) || defaultInitialLog;
-    let targetWeight = parseFloat(localStorage.getItem('reta_pro_target')) || 0;
-    let chart;
-
-    function setTarget() {
-      const val = parseFloat(document.getElementById('targetInput').value);
-      if (val) {
-        targetWeight = val;
-        localStorage.setItem('reta_pro_target', targetWeight);
-        updateDashboard();
-      }
+    var logs = [];
+    try {
+      var stored = localStorage.getItem('reta_pro_logs');
+      logs = stored ? JSON.parse(stored) : defaultInitialLog;
+    } catch(e) {
+      logs = defaultInitialLog;
     }
 
     function calculateSerumLevel(targetDateStr) {
-      const targetTime = new Date(targetDateStr).getTime();
-      let totalLevel = 0;
+      var targetTime = new Date(targetDateStr).getTime();
+      var totalLevel = 0;
 
-      logs.forEach(l => {
+      logs.forEach(function(l) {
         if (l.dose && l.dose > 0) {
-          const entryTime = new Date(l.datetime).getTime();
-          const hoursPassed = (targetTime - entryTime) / (1000 * 60 * 60);
+          var entryTime = new Date(l.datetime).getTime();
+          var hoursPassed = (targetTime - entryTime) / (1000 * 60 * 60);
           if (hoursPassed >= 0) {
             totalLevel += l.dose * Math.pow(0.5, hoursPassed / HALF_LIFE_HOURS);
           }
@@ -287,16 +258,26 @@
     }
 
     function addEntry() {
-      const datetime = document.getElementById('datetime').value;
-      const weight = parseFloat(document.getElementById('weight').value);
-      const dose = parseFloat(document.getElementById('dose').value) || 0;
-      const site = document.getElementById('site').value;
-      const sideEffects = document.getElementById('sideEffects').value.trim();
+      var datetime = document.getElementById('datetime').value;
+      var weight = parseFloat(document.getElementById('weight').value);
+      var dose = parseFloat(document.getElementById('dose').value) || 0;
+      var site = document.getElementById('site').value;
+      var sideEffects = document.getElementById('sideEffects').value.trim();
 
-      if (!datetime) return alert('Bitte Datum und Uhrzeit angeben.');
+      if (!datetime) {
+        alert('Bitte Datum angeben.');
+        return;
+      }
 
-      logs.push({ datetime, weight: isNaN(weight) ? null : weight, dose, site, sideEffects });
-      logs.sort((a,b) => new Date(a.datetime) - new Date(b.datetime));
+      logs.push({ 
+        datetime: datetime, 
+        weight: isNaN(weight) ? null : weight, 
+        dose: dose, 
+        site: site, 
+        sideEffects: sideEffects 
+      });
+
+      logs.sort(function(a,b) { return new Date(a.datetime) - new Date(b.datetime); });
       
       document.getElementById('weight').value = '';
       document.getElementById('dose').value = '';
@@ -305,24 +286,24 @@
     }
 
     function updateDashboard() {
-      const weights = logs.filter(l => l.weight !== null);
+      var weights = logs.filter(function(l) { return l.weight !== null; });
       if (weights.length > 0) {
-        const start = weights[0].weight;
-        const current = weights[weights.length - 1].weight;
-        const diff = (current - start).toFixed(1);
+        var start = weights[0].weight;
+        var current = weights[weights.length - 1].weight;
+        var diff = (current - start).toFixed(1);
 
         document.getElementById('startWt').innerText = start + ' kg';
         document.getElementById('currWt').innerText = current + ' kg';
         document.getElementById('diffWt').innerText = (diff > 0 ? '+' : '') + diff + ' kg';
       }
 
-      const activeSerum = calculateSerumLevel(new Date().toISOString());
-      document.getElementById('activeLevel').innerText = activeSerum.toFixed(2) + ' mg';
+      var activeSerum = calculateSerumLevel(new Date().toISOString());
+      document.getElementById('activeLevel').innerText = activeSerum.toFixed(2);
 
-      const doseLogs = logs.filter(l => l.site);
+      var doseLogs = logs.filter(function(l) { return l.site; });
       if (doseLogs.length > 0) {
-        const lastSite = doseLogs[doseLogs.length - 1].site;
-        document.getElementById('rotationInfo').innerText = `Zuletzt gespritzt: ${lastSite} (Bitte Stelle rotieren)`;
+        var lastSite = doseLogs[doseLogs.length - 1].site;
+        document.getElementById('rotationInfo').innerText = 'Zuletzt gespritzt: ' + lastSite;
       }
     }
 
@@ -334,78 +315,65 @@
     }
 
     function renderHistory() {
-      document.getElementById('history').innerHTML = [...logs].reverse().map(l => `
-        <div class="log-item">
-          <div class="log-header">
-            <span>${l.datetime.replace('T', ' ')}</span>
-            <span>${l.weight ? l.weight + ' kg' : ''}</span>
-          </div>
-          <div class="log-details">
-            ${l.dose ? `<span class="tag tag-dose">💉 ${l.dose} mg</span>` : ''}
-            ${l.site ? `<span class="tag">📍 ${l.site}</span>` : ''}
-            ${l.sideEffects ? `<span class="tag tag-side">⚠️ ${l.sideEffects}</span>` : ''}
-          </div>
-        </div>
-      `).join('');
+      var html = '';
+      var rev = logs.slice().reverse();
+      for (var i = 0; i < rev.length; i++) {
+        var l = rev[i];
+        html += '<div class="log-item">' +
+          '<div class="log-header">' +
+            '<span>' + l.datetime.replace('T', ' ') + '</span>' +
+            '<span>' + (l.weight ? l.weight + ' kg' : '') + '</span>' +
+          '</div>' +
+          '<div class="log-details">' +
+            (l.dose ? '<span class="tag tag-dose">💉 ' + l.dose + ' mg</span>' : '') +
+            (l.site ? '<span class="tag">📍 ' + l.site + '</span>' : '') +
+            (l.sideEffects ? '<span class="tag tag-side">⚠️ ' + l.sideEffects + '</span>' : '') +
+          '</div>' +
+        '</div>';
+      }
+      document.getElementById('history').innerHTML = html;
     }
 
     function renderChart() {
-      const view = document.getElementById('chartView').value;
-      const ctx = document.getElementById('mainChart').getContext('2d');
-      if (chart) chart.destroy();
+      var filtered = logs.filter(function(l) { return l.weight !== null; }).slice(-7);
+      if (filtered.length === 0) return;
 
-      let labels = [];
-      let data = [];
-      let labelName = '';
-      let color = '#38bdf8';
+      var maxW = Math.max.apply(Math, filtered.map(function(l) { return l.weight; }));
+      var minW = Math.min.apply(Math, filtered.map(function(l) { return l.weight; })) - 2;
 
-      if (view === 'weight') {
-        const filtered = logs.filter(l => l.weight !== null);
-        labels = filtered.map(l => l.datetime.split('T')[0]);
-        data = filtered.map(l => l.weight);
-        labelName = 'Gewicht (kg)';
-      } else {
-        labels = logs.map(l => l.datetime.split('T')[0]);
-        data = logs.map(l => calculateSerumLevel(l.datetime));
-        labelName = 'Wirkstoff im Blut (mg)';
-        color = '#34d399';
-      }
-
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{ label: labelName, data: data, borderColor: color, tension: 0.3, fill: false }]
-        },
-        options: {
-          scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } },
-          plugins: { legend: { display: false } }
-        }
+      var chartHtml = '';
+      filtered.forEach(function(l) {
+        var pct = ((l.weight - minW) / (maxW - minW || 1)) * 100;
+        pct = Math.max(pct, 15);
+        chartHtml += '<div class="chart-bar-wrap">' +
+          '<div class="chart-bar" style="height:' + pct + '%;"></div>' +
+          '<div class="chart-label">' + l.weight + '</div>' +
+        '</div>';
       });
+      document.getElementById('chart').innerHTML = chartHtml;
     }
 
     function exportCSV() {
-      let csv = 'Datum;Gewicht;Dosis;Stelle;Nebenwirkungen\n';
-      logs.forEach(l => {
-        csv += `${l.datetime};${l.weight || ''};${l.dose || ''};${l.site || ''};${l.sideEffects || ''}\n`;
+      var csv = 'Datum;Gewicht;Dosis;Stelle;Nebenwirkungen\n';
+      logs.forEach(function(l) {
+        csv += l.datetime + ';' + (l.weight || '') + ';' + (l.dose || '') + ';' + (l.site || '') + ';' + (l.sideEffects || '') + '\n';
       });
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.setAttribute('href', url);
-      a.setAttribute('download', 'retatrutide_backup.csv');
+      var blob = new Blob([csv], { type: 'text/csv' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'retatrutide_backup.csv';
       a.click();
     }
 
     function importCSV(e) {
-      const file = e.target.files[0];
+      var file = e.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
+      var reader = new FileReader();
       reader.onload = function(evt) {
-        const lines = evt.target.result.split('\n').slice(1);
+        var lines = evt.target.result.split('\n').slice(1);
         logs = [];
-        lines.forEach(line => {
-          const parts = line.split(';');
+        lines.forEach(function(line) {
+          var parts = line.split(';');
           if (parts.length >= 2 && parts[0]) {
             logs.push({
               datetime: parts[0],
