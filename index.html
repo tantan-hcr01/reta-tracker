@@ -379,7 +379,7 @@
       }
 
       const serumGradient = ctx.createLinearGradient(0, 0, 0, 200);
-      serumGradient.addColorStop(0, 'rgba(48, 209, 88, 0.45)');
+      serumGradient.addColorStop(0, 'rgba(255, 159, 10, 0.45)');
       serumGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
       chartInstance = new Chart(ctx, {
@@ -401,7 +401,7 @@
             {
               label: 'Wirkstoff im Blut (mg)',
               data: serumData,
-              borderColor: '#30D158',
+              borderColor: '#FF9F0A',
               backgroundColor: serumGradient,
               borderWidth: 2.5,
               fill: true,
@@ -425,7 +425,7 @@
             ySerum: {
               type: 'linear', position: 'right',
               grid: { display: false },
-              ticks: { color: '#30D158', font: { size: 10, weight: '700' } }
+              ticks: { color: '#FF9F0A', font: { size: 10, weight: '700' } }
             }
           }
         }
