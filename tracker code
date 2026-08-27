@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Retatrutide Pro Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f8fafc; --sub: #94a3b8; --danger: #f43f5e; --success: #34d399; }
+    body { margin:0; padding:16px; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--text); }
+    h2, h3 { margin: 0 0 10px 0; font-weight: 600; }
+    .card { background:var(--card); padding:16px; border-radius:16px; margin-bottom:14px; box-shadow:0 4px 12px rgba(0,0,0,0.25); }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:12px; }
+    .stat-box { background:#334155; padding:10px; border-radius:10px; text-align:center; }
+    .stat-val { font-size:18px; font-weight:bold; color:var(--accent); }
+    .stat-lbl { font-size:11px; color:var(--sub); margin-top:2px; }
+    input, button, select { width:100%; padding:10px; margin-top:6px; border-radius:8px; border:none; box-sizing:border-box; font-size:14px; }
+    input, select { background:#334155; color:#fff; }
+    button { background:var(--accent); color:#0f172a; font-weight:bold; cursor:pointer; }
+    .btn-sub { background:#475569; color:#fff; }
+    .log-item { padding:10px 0; border-bottom:1px solid #334155; font-size:13px; }
+    .log-header { display:flex; justify-content:space-between; font-weight:bold; margin-bottom:4px; }
+    .log-details { color:var(--sub); font-size:12px; display:flex; gap:8px; flex-wrap:wrap; }
+    .tag { background:#334155; padding:2px 6px; border-radius:4px; }
+    .tag-dose { background:#0284c7; color:#fff; }
+    .tag-side { background:#881337; color:#fecdd3; }
+    .rotation-alert { background:#334155; border-left: 4px solid var(--accent); padding:8px 12px; font-size:12px; border-radius:4px; margin-top:6px; }
+  </style>
+</head>
+<body>
+
+  <h2>Retatrutide Pro Tracker</h2>
+
+  <!-- Dashboard Stats -->
+  <div class="grid">
+    <div class="stat-box"><div class="stat-val" id="startWt">--</div><div class="stat-lbl">Startgewicht</div></div>
+    <div class="stat-box"><div class="stat-val" id="currWt">--</div><div class="stat-lbl">Aktuell</div></div>
+    <div class="stat-box"><div class="stat-val" id="diffWt">--</div><div class="stat-lbl">Gesamtabnahme</div></div>
+    <div class="stat-box"><div class="stat-val" id="activeLevel">--</div><div class="stat-lbl">Est. Wirkstoff im Blut</div></div>
+  </div>
+
+  <div id="rotationInfo" class="rotation-alert">Nächste Injektion: Stelle wählen...</div>
+
+  <!-- Entry Form -->
+  <div class="card">
+    <h3>Neuer Eintrag</h3>
+    <input type="datetime-local" id="datetime">
+    <input type="number" step="0.1" id="weight" placeholder="Gewicht (kg)">
+    <input type="number" step="0.25" id="dose" placeholder="Retatrutide Dosis (mg)">
+    <select id="site">
+      <option value="">-- Injektionsstelle wählen --</option>
+      <option value="Bauch links">Bauch links</option>
+      <option value="Bauch rechts">Bauch rechts</option>
+      <option value="Oberschenkel links">Oberschenkel links</option>
+      <option value="Oberschenkel rechts">Oberschenkel rechts</option>
+      <option value="Oberarm links">Oberarm links</option>
+      <option value="Oberarm rechts">Oberarm rechts</option>
+    </select>
+    <input type="text" id="sideEffects" placeholder="Nebenwirkungen (z. B. Übelkeit, Kopfschmerzen)">
+    <button onclick="addEntry()">Eintrag Speichern</button>
+  </div>
+
+  <!-- Chart Options -->
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <h3>Verlauf</h3>
+      <select id="chartView" onchange="renderChart()" style="width:auto; padding:4px;">
+        <option value="weight">Gewicht (kg)</option>
+        <option value="serum">Wirkstoff-Spiegel (mg)</option>
+      </select>
+    </div>
+    <canvas id="mainChart"></canvas>
+  </div>
+
+  <!-- Goal Setup & Data Export -->
+  <div class="card">
+    <h3>Einstellungen & Sicherung</h3>
+    <input type="number" step="0.1" id="targetInput" placeholder="Zielgewicht (kg)">
+    <button class="btn-sub" onclick="setTarget()">Zielgewicht festlegen</button>
+    <div class="grid" style="margin-top:10px;">
+      <button class="btn-sub" onclick="exportCSV()">CSV Exportieren</button>
+      <button class="btn-sub" onclick="document.getElementById('importFile').click()">CSV Importieren</button>
+    </div>
+    <input type="file" id="importFile" style="display:none" onchange="importCSV(event)" accept=".csv">
+  </div>
+
+  <!-- Log History -->
+  <div class="card">
+    <h3>Historie</h3>
+    <div id="history"></div>
+  </div>
+
+  <script>
+    const HALF_LIFE_HOURS = 144; // Retatrutide Halbwertszeit: ~6 Tage (144 Std)
+    
+    // Datum/Uhrzeit auf jetzt setzen
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('datetime').value = now.toISOString().slice(0,16);
+
+    let logs = JSON.parse(localStorage.getItem('reta_pro_logs') || '[]');
+    let targetWeight = parseFloat(localStorage.getItem('reta_pro_target')) || 0;
+    let chart;
+
+    function setTarget() {
+      const val = parseFloat(document.getElementById('targetInput').value);
+      if (val) {
+        targetWeight = val;
+        localStorage.setItem('reta_pro_target', targetWeight);
+        updateDashboard();
+      }
+    }
+
+    function calculateSerumLevel(targetDateStr) {
+      const targetTime = new Date(targetDateStr).getTime();
+      let totalLevel = 0;
+
+      logs.forEach(l => {
+        if (l.dose && l.dose > 0) {
+          const entryTime = new Date(l.datetime).getTime();
+          const hoursPassed = (targetTime - entryTime) / (1000 * 60 * 60);
+          if (hoursPassed >= 0) {
+            totalLevel += l.dose * Math.pow(0.5, hoursPassed / HALF_LIFE_HOURS);
+          }
+        }
+      });
+      return totalLevel;
+    }
+
+    function addEntry() {
+      const datetime = document.getElementById('datetime').value;
+      const weight = parseFloat(document.getElementById('weight').value);
+      const dose = parseFloat(document.getElementById('dose').value) || 0;
+      const site = document.getElementById('site').value;
+      const sideEffects = document.getElementById('sideEffects').value.trim();
+
+      if (!datetime) return alert('Bitte Datum und Uhrzeit angeben.');
+
+      logs.push({ datetime, weight: isNaN(weight) ? null : weight, dose, site, sideEffects });
+      logs.sort((a,b) => new Date(a.datetime) - new Date(b.datetime));
+      
+      document.getElementById('weight').value = '';
+      document.getElementById('dose').value = '';
+      document.getElementById('sideEffects').value = '';
+      saveAndRender();
+    }
+
+    function updateDashboard() {
+      const weights = logs.filter(l => l.weight !== null);
+      if (weights.length > 0) {
+        const start = weights[0].weight;
+        const current = weights[weights.length - 1].weight;
+        const diff = (current - start).toFixed(1);
+
+        document.getElementById('startWt').innerText = start + ' kg';
+        document.getElementById('currWt').innerText = current + ' kg';
+        document.getElementById('diffWt').innerText = (diff > 0 ? '+' : '') + diff + ' kg';
+      }
+
+      const activeSerum = calculateSerumLevel(new Date().toISOString());
+      document.getElementById('activeLevel').innerText = activeSerum.toFixed(2) + ' mg';
+
+      const doseLogs = logs.filter(l => l.site);
+      if (doseLogs.length > 0) {
+        const lastSite = doseLogs[doseLogs.length - 1].site;
+        document.getElementById('rotationInfo').innerText = `Zuletzt gespritzt: ${lastSite} (Bitte Stelle rotieren)`;
+      }
+    }
+
+    function saveAndRender() {
+      localStorage.setItem('reta_pro_logs', JSON.stringify(logs));
+      updateDashboard();
+      renderHistory();
+      renderChart();
+    }
+
+    function renderHistory() {
+      document.getElementById('history').innerHTML = [...logs].reverse().map(l => `
+        <div class="log-item">
+          <div class="log-header">
+            <span>${l.datetime.replace('T', ' ')}</span>
+            <span>${l.weight ? l.weight + ' kg' : ''}</span>
+          </div>
+          <div class="log-details">
+            ${l.dose ? `<span class="tag tag-dose">💉 ${l.dose} mg</span>` : ''}
+            ${l.site ? `<span class="tag">📍 ${l.site}</span>` : ''}
+            ${l.sideEffects ? `<span class="tag tag-side">⚠️ ${l.sideEffects}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderChart() {
+      const view = document.getElementById('chartView').value;
+      const ctx = document.getElementById('mainChart').getContext('2d');
+      if (chart) chart.destroy();
+
+      let labels = [];
+      let data = [];
+      let labelName = '';
+      let color = '#38bdf8';
+
+      if (view === 'weight') {
+        const filtered = logs.filter(l => l.weight !== null);
+        labels = filtered.map(l => l.datetime.split('T')[0]);
+        data = filtered.map(l => l.weight);
+        labelName = 'Gewicht (kg)';
+      } else {
+        labels = logs.map(l => l.datetime.split('T')[0]);
+        data = logs.map(l => calculateSerumLevel(l.datetime));
+        labelName = 'Wirkstoff im Blut (mg)';
+        color = '#34d399';
+      }
+
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{ label: labelName, data: data, borderColor: color, tension: 0.3, fill: false }]
+        },
+        options: {
+          scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function exportCSV() {
+      let csv = 'Datum;Gewicht;Dosis;Stelle;Nebenwirkungen\n';
+      logs.forEach(l => {
+        csv += `${l.datetime};${l.weight || ''};${l.dose || ''};${l.site || ''};${l.sideEffects || ''}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', 'retatrutide_backup.csv');
+      a.click();
+    }
+
+    function importCSV(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const lines = evt.target.result.split('\n').slice(1);
+        logs = [];
+        lines.forEach(line => {
+          const parts = line.split(';');
+          if (parts.length >= 2 && parts[0]) {
+            logs.push({
+              datetime: parts[0],
+              weight: parts[1] ? parseFloat(parts[1]) : null,
+              dose: parts[2] ? parseFloat(parts[2]) : 0,
+              site: parts[3] || '',
+              sideEffects: parts[4] || ''
+            });
+          }
+        });
+        saveAndRender();
+        alert('Import erfolgreich!');
+      };
+      reader.readAsText(file);
+    }
+
+    updateDashboard();
+    renderChart();
+    renderHistory();
+  </script>
+</body>
+</html>
